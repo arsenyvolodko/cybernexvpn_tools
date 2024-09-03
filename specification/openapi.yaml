@@ -1,0 +1,323 @@
+openapi: 3.0.1
+info:
+  title: CyberNexVpn API
+  version: '1.0'
+paths:
+  /api/v1/telegram/auth:
+    post:
+      operationId: api_token_auth_create
+      tags:
+        - telegram-auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelegramAuthRequest'
+        required: true
+      responses:
+        '200':
+          description: successful request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthToken'
+  /api/v1/user/{userId}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags:
+        - user
+      responses:
+        '200':
+          description: successful request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /api/v1/user/current:
+    get:
+      tags:
+        - user
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /api/v1/user/{userId}/balance-history:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags:
+        - user
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+  /api/v1/user/{userId}/device:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: integer
+    post:
+      tags:
+        - user-device
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedObject'
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags:
+        - user-device
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Device'
+  /api/v1/device/{deviceId}:
+    parameters:
+      - name: deviceId
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags:
+        - device
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+    patch:
+      tags:
+        - device
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDeviceRequest'
+      responses:
+        200:
+          description: successful operation
+    delete:
+      tags:
+        - device
+      responses:
+        200:
+          description: successful operation
+  /api/v1/device/{deviceId}/qr:
+    parameters:
+    - name: deviceId
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      tags:
+        - device
+      responses:
+        200:
+          description: successful operation
+          content:
+            file:
+              schema:
+                type: string
+                format: binary
+  /api/v1/device/{deviceId}/config:
+    parameters:
+    - name: deviceId
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      tags:
+        - device
+      responses:
+        200:
+          description: successful operation
+          content:
+            file:
+              schema:
+                type: string
+                format: binary
+  /api/v1/payment:
+    post:
+      tags:
+        - payment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentRequest'
+        required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatePaymentResponse'
+components:
+  schemas:
+    TelegramAuthRequest:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/AuthUser'
+
+    UpdateDeviceRequest:
+      type: object
+      properties:
+        name:
+          type: string
+
+    CreatePaymentRequest:
+      type: object
+      properties:
+        user:
+          type: integer
+        value:
+          type: integer
+
+    CreatePaymentResponse:
+      type: object
+      properties:
+        link:
+          type: string
+
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        first_name:
+          type: string
+        last_name:
+          type: string
+        username:
+          type: string
+        photo_url:
+          type: string
+        auth_date:
+          type: integer
+        hash:
+          type: string
+      required:
+        - id
+        - hash
+
+    AuthToken:
+      type: object
+      properties:
+        token:
+          type: string
+      required:
+        - token
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        fistName:
+          type: string
+        lastName:
+          type: string
+        username:
+          type: string
+        is_superuser:
+          type: boolean
+        balance:
+          type: integer
+        inviter:
+          type: integer
+        invitationLink:
+          type: string
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        user:
+          type: integer
+        value:
+          type: integer
+        is_credit:
+          type: boolean
+        timestamp:
+          type: string
+          format: date-time
+        comment:
+          type: string
+          enum:
+            - startBalance
+            - fillUpBalance
+            - addDevice
+            - renewSubscription
+            - promoCode
+            - invitation
+            - editByAdmin
+        promoCode:
+          type: string
+        payment:
+          type: integer
+
+
+    Device:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        active:
+          type: boolean
+        end_date:
+          type: string
+          format: date-time
+
+    CreatedObject:
+      properties:
+        id:
+          type: integer
+
+    Error:
+      properties:
+        id:
+          type: integer
+        message:
+          type: string

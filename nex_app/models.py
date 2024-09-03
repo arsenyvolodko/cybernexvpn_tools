@@ -30,9 +30,9 @@ class Server(models.Model):
     )
 
 
-class Client(models.Model):
+class Device(models.Model):
     user = models.ForeignKey(NexUser, on_delete=models.RESTRICT)
-    device_num = models.PositiveIntegerField(
+    num = models.PositiveIntegerField(
         validators=[
             MinValueValidator(1),
             MaxValueValidator(settings.MAX_DEVICES_ALLOWED),
@@ -45,7 +45,7 @@ class Client(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["user", "device_num"], name="unique_user_device_num"
+                fields=["user", "num"], name="unique_user_num"
             )
         ]
 
@@ -55,7 +55,7 @@ class IpConfig(models.Model):
         Server, on_delete=models.RESTRICT, related_name="ip_config"
     )
     ip = models.GenericIPAddressField(protocol="IPv4")
-    client = models.ForeignKey(Client, null=True, on_delete=models.SET_NULL)
+    client = models.ForeignKey(Device, null=True, on_delete=models.SET_NULL)
 
     class Meta:
         constraints = [
