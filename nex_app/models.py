@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
 
-from nex_app.enums import TransactionCommentEnum, PaymentStatusEnum
+from nex_app.enums import TransactionTypeEnum, PaymentStatusEnum
 
 from django.db import models
 
@@ -38,6 +38,7 @@ class Device(models.Model):
             MaxValueValidator(settings.MAX_DEVICES_ALLOWED),
         ],
     )
+    will_be_renewed = models.BooleanField(default=True)
     active = models.BooleanField(default=True)
     end_date = models.DateField()
     private_key = models.CharField(max_length=63, unique=True)
@@ -85,5 +86,5 @@ class Transaction(models.Model):
     value = models.PositiveIntegerField()
     is_credit = models.BooleanField()
     timestamp = models.DateTimeField(auto_now_add=True)
-    comment = models.CharField(max_length=63, choices=TransactionCommentEnum.choices())
+    type = models.CharField(max_length=63, choices=TransactionTypeEnum.choices())
     promo_code = models.ForeignKey(PromoCode, null=True, on_delete=models.RESTRICT)

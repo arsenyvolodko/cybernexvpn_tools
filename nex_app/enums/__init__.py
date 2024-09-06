@@ -1,2 +1,2 @@
-from .transaction_comment_enum import TransactionCommentEnum
+from .transaction_type_enum import TransactionTypeEnum
 from .payment_status_enum import PaymentStatusEnum

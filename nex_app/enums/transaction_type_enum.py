@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class TransactionCommentEnum(Enum):
+class TransactionTypeEnum(Enum):
     RENEW_SUBSCRIPTION = "Продление подписки"
     INVITATION = "Приглашение пользователя"
     START_BALANCE = "Стартовый баланс"

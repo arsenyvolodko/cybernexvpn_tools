@@ -5,9 +5,10 @@ info:
 paths:
   /api/v1/telegram/auth:
     post:
-      operationId: api_token_auth_create
       tags:
-        - telegram-auth
+        - auth
+      security:
+        - bearerAuth: []
       requestBody:
         content:
           application/json:
@@ -20,8 +21,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthToken'
-  /api/v1/user/{userId}:
+                $ref: '#/components/schemas/TelegramAuthResponse'
+        '403':
+          description: Forbidden - no access token
+
+  /api/v1/user/{userId}/token:
     parameters:
       - name: userId
         in: path
@@ -30,18 +34,27 @@ paths:
           type: integer
     get:
       tags:
-        - user
+        - auth
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: successful request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/AuthToken'
+        '403':
+          description: Forbidden - no access token
+        '404':
+          description: User not found
+
   /api/v1/user/current:
     get:
       tags:
         - user
+      security:
+        - bearerAuth: []
       responses:
         200:
           description: successful operation
@@ -49,16 +62,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
-  /api/v1/user/{userId}/balance-history:
-    parameters:
-      - name: userId
-        in: path
-        required: true
-        schema:
-          type: integer
+        '403':
+          description: Forbidden - no access token
+
+  /api/v1/transaction-history:
     get:
       tags:
         - user
+      security:
+        - bearerAuth: []
       responses:
         200:
           description: successful operation
@@ -68,16 +80,32 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Transaction'
-  /api/v1/user/{userId}/device:
-    parameters:
-      - name: userId
-        in: path
-        required: true
-        schema:
-          type: integer
+        '403':
+          description: Forbidden - no access token
+
+  /api/v1/transaction-history-file:
+    get:
+      tags:
+        - user
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: successfull operation
+          content:
+            file:
+              schema:
+                type: string
+                format: binary
+        '403':
+          description: Forbidden - no access token
+
+  /api/v1/user/device:
     post:
       tags:
         - user-device
+      security:
+        - bearerAuth: []
       responses:
         200:
           description: successful operation
@@ -91,9 +119,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - no access token
+
     get:
       tags:
         - user-device
+      security:
+        - bearerAuth: []
       responses:
         200:
           description: successful operation
@@ -103,6 +136,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Device'
+        '403':
+          description: Forbidden - no access token
+
   /api/v1/device/{deviceId}:
     parameters:
       - name: deviceId
@@ -113,6 +149,8 @@ paths:
     get:
       tags:
         - device
+      security:
+        - bearerAuth: []
       responses:
         200:
           description: successful operation
@@ -120,9 +158,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Device'
+        '403':
+          description: Forbidden - no access token
+        '404':
+          description: Device not found
+
     patch:
       tags:
         - device
+      security:
+        - bearerAuth: []
       requestBody:
         content:
           application/json:
@@ -131,22 +176,36 @@ paths:
       responses:
         200:
           description: successful operation
+        '403':
+          description: Forbidden - no access token
+        '404':
+          description: Device not found
+
     delete:
       tags:
         - device
+      security:
+        - bearerAuth: []
       responses:
         200:
           description: successful operation
+        '403':
+          description: Forbidden - no access token
+        '404':
+          description: Device not found
+
   /api/v1/device/{deviceId}/qr:
     parameters:
-    - name: deviceId
-      in: path
-      required: true
-      schema:
-        type: integer
+      - name: deviceId
+        in: path
+        required: true
+        schema:
+          type: integer
     get:
       tags:
         - device
+      security:
+        - bearerAuth: []
       responses:
         200:
           description: successful operation
@@ -155,16 +214,23 @@ paths:
               schema:
                 type: string
                 format: binary
+        '403':
+          description: Forbidden - no access token
+        '404':
+          description: Device not found
+
   /api/v1/device/{deviceId}/config:
     parameters:
-    - name: deviceId
-      in: path
-      required: true
-      schema:
-        type: integer
+      - name: deviceId
+        in: path
+        required: true
+        schema:
+          type: integer
     get:
       tags:
         - device
+      security:
+        - bearerAuth: []
       responses:
         200:
           description: successful operation
@@ -173,10 +239,86 @@ paths:
               schema:
                 type: string
                 format: binary
+        '403':
+          description: Forbidden - no access token
+        '404':
+          description: Device not found
+
+  /api/v1/device/{deviceId}/renew-subscription:
+    parameters:
+      - name: deviceId
+        in: path
+        required: true
+        schema:
+          type: integer
+    post:
+      tags:
+        - device
+      security:
+        - bearerAuth: []
+      description: Возобновление подписки в случае, если устройство было отключено
+      responses:
+        200:
+          description: successful operation
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - no access token
+        '404':
+          description: Device not found
+
+  /api/v1/device/{deviceId}/stop-subscription:
+    parameters:
+      - name: deviceId
+        in: path
+        required: true
+        schema:
+          type: integer
+    post:
+      tags:
+        - device
+      security:
+        - bearerAuth: []
+      description: Отключение автопродления подписки
+      responses:
+        200:
+          description: successful operation
+        '403':
+          description: Forbidden - no access token
+        '404':
+          description: Device not found
+
+  /api/v1/device/{deviceId}/restart-subscription:
+    parameters:
+      - name: deviceId
+        in: path
+        required: true
+        schema:
+          type: integer
+    post:
+      tags:
+        - device
+      security:
+        - bearerAuth: []
+      description: Возобновление автосписания средств, если устройство все еще активно, но было отключено автопродление
+      responses:
+        200:
+          description: successful operation
+        '403':
+          description: Forbidden - no access token
+        '404':
+          description: Device not found
+
   /api/v1/payment:
     post:
       tags:
         - payment
+      security:
+        - bearerAuth: []
       requestBody:
         content:
           application/json:
@@ -190,7 +332,83 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreatePaymentResponse'
+        '403':
+          description: Forbidden - no access token
+
+  /api/v1/payment/{paymentId}:
+    get:
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - payment
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                 $ref: '#/components/schemas/Payment'
+        '403':
+          description: Forbidden - no access token
+        '404':
+          description: Payment not found
+
+  /api/v1/promo-code:
+    post:
+      tags:
+        - promo-code
+      security:
+        - bearerAuth: []
+      requestBody:
+          content:
+            application/json:
+              schema:
+                 $ref: '#/components/schemas/PromoCodeRequest'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                 $ref: '#/components/schemas/CreatePromoCodeResponse'
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - no access token
+
+  /api/v1/consts/subscription-price:
+    get:
+      tags:
+        - consts
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: integer
+        '403':
+          description: Forbidden - no access token
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     TelegramAuthRequest:
       type: object
@@ -207,16 +425,36 @@ components:
     CreatePaymentRequest:
       type: object
       properties:
-        user:
-          type: integer
         value:
           type: integer
+
+    PromoCodeRequest:
+      type: object
+      properties:
+        name:
+          type: string
+
+    TelegramAuthResponse:
+      type: object
+      properties:
+        new_user:
+          type: boolean
+        token:
+          type: string
 
     CreatePaymentResponse:
       type: object
       properties:
+        id:
+          type: integer
         link:
           type: string
+
+    CreatePromoCodeResponse:
+      type: object
+      properties:
+        value:
+          type: integer
 
     AuthUser:
       type: object
@@ -225,12 +463,16 @@ components:
           type: integer
         first_name:
           type: string
+          nullable: true
         last_name:
           type: string
+          nullable: true
         username:
           type: string
+          nullable: true
         photo_url:
           type: string
+          nullable: true
         auth_date:
           type: integer
         hash:
@@ -238,6 +480,7 @@ components:
       required:
         - id
         - hash
+        - auth_date
 
     AuthToken:
       type: object
@@ -254,34 +497,37 @@ components:
           type: integer
         fistName:
           type: string
+          nullable: true
         lastName:
           type: string
+          nullable: true
         username:
           type: string
+          nullable: true
         is_superuser:
           type: boolean
         balance:
           type: integer
         inviter:
           type: integer
+          nullable: true
         invitationLink:
           type: string
+          description: Реферальная ссылка пользователя
 
     Transaction:
       type: object
       properties:
         id:
           type: integer
-        user:
-          type: integer
         value:
           type: integer
-        is_credit:
+        isCredit:
           type: boolean
         timestamp:
           type: string
           format: date-time
-        comment:
+        type:
           type: string
           enum:
             - startBalance
@@ -293,9 +539,29 @@ components:
             - editByAdmin
         promoCode:
           type: string
+          description: Если данная транзакция результат применения промокода, то здесь передается его значение
+          nullable: true
         payment:
           type: integer
+          description: Если данная транзакция результат пополнения баланса через платежную систему, то здесь передается id платежа
+          nullable: true
 
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+        value:
+          type: integer
+        status:
+          type: string
+          enum:
+            - pending
+            - canceled
+            - succeeded
+        createdAt:
+          type: string
+          format: date-time
 
     Device:
       type: object
@@ -306,9 +572,12 @@ components:
           type: string
         active:
           type: boolean
+        will_be_renewed:
+          type: boolean
+          description: Будет ли продлена подписка для этого устройства после окончания ее дейсвтия
         end_date:
           type: string
-          format: date-time
+          format: date
 
     CreatedObject:
       properties:
@@ -317,7 +586,7 @@ components:
 
     Error:
       properties:
-        id:
+        type:
           type: integer
         message:
           type: string
